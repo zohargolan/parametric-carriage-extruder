@@ -158,6 +158,11 @@ hotend_groove_height = 6;
 // jhead
 hotend_height_above_groove = 5;
 hotend_groove_height = 4.6;
+
+// chinese all metal jhead
+hotend_height_above_groove = 3.75;
+hotend_groove_height = 5.5;
+
 /*
 */
 

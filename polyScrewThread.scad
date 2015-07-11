@@ -1,1 +1,0 @@
-polyScrewThread_r1.scad

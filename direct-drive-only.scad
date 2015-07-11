@@ -45,33 +45,72 @@ output              = OUTPUT_NONE;
 output              = OUTPUT_BOWDEN;
 output              = OUTPUT_GROOVE_MOUNT;
 
-module direct_drive() {
-  rounded_radius = motor_side/2 - motor_hole_spacing/2;
-  block_height = idler_pos_z + idler_bearing_height/2 + idler_washer_thickness + idler_shaft_support;
-  block_height = idler_pos_z + idler_bearing_height/2 + .5;
-  block_height = filament_pos_z + filament_opening/2 + 1;
+rounded_radius = motor_side/2 - motor_hole_spacing/2;
+block_height = idler_pos_z + idler_bearing_height/2 + idler_washer_thickness + idler_shaft_support;
+block_height = idler_pos_z + idler_bearing_height/2 + .5;
+block_height = filament_pos_z + filament_opening/2 + 1;
 
-  hotend_rounded_corner_radius = 3;
-  hotend_rounded_corner_pos_x  = filament_pos_x+hotend_diam/2;
-  hotend_rounded_corner_pos_y  = hotend_pos_y-hotend_clamped_height+hotend_rounded_corner_radius+hotend_clearance;
+hotend_rounded_corner_radius = 3;
+hotend_rounded_corner_pos_x  = filament_pos_x+hotend_diam/2;
+hotend_rounded_corner_pos_y  = hotend_pos_y-hotend_clamped_height+hotend_rounded_corner_radius+hotend_clearance;
+
+foot_enable = 1;
+foot_plate_corner_diameter = 8;
+foot_length = 65;
+foot_width = 8;
+foot_height = block_height + 5;
+foot_corner_radius = 1;
+foot_hole_distance = 50;
+foot_hole_diameter = 5;
+
+
+module direct_drive() {
+  
   module body() {
-    hull() {
-      translate([0,0,plate_thickness/2]) {
-        rounded_square(motor_side,motor_diam,plate_thickness);
+    if(foot_enable == 1){
+      hull() {
+        for(side=[right,left]){
+          for(side1=[top,bottom]){
+            translate([side * (motor_side/2 - foot_plate_corner_diameter/2),
+              side1 * (motor_side/2 - foot_plate_corner_diameter/2),0]) {
+              cylinder(h=plate_thickness,d=foot_plate_corner_diameter,$fn=32);
+            }
+          }
+        }
       }
-      if (!groove_mount_wings) {
-        translate([hotend_rounded_corner_pos_x,hotend_rounded_corner_pos_y,plate_thickness/2]) {
-          hole(hotend_rounded_corner_radius*2,plate_thickness,resolution);
+    }
+    if(foot_enable == 0){
+      hull() {
+        translate([0,0,plate_thickness/2]) {
+          rounded_square(motor_side,motor_diam,plate_thickness);
+        }
+        if (!groove_mount_wings) {
+          translate([hotend_rounded_corner_pos_x,hotend_rounded_corner_pos_y,plate_thickness/2]) {
+            hole(hotend_rounded_corner_radius*2,plate_thickness,resolution);
+          }
         }
       }
     }
 
     // main block
-    hull() {
-      for(y=[motor_side/2-hotend_rounded_corner_radius,hotend_rounded_corner_pos_y]) {
-        for (x=[(motor_side/2-hotend_rounded_corner_radius)*left,hotend_rounded_corner_pos_x]) {
-          translate([x,y,block_height/2]) {
-            hole(hotend_rounded_corner_radius*2,block_height,resolution);
+    if(foot_enable == 1){
+      hull() {
+        for(y=[motor_side/2-hotend_rounded_corner_radius,hotend_rounded_corner_pos_y]) {
+          for (x=[(motor_side/2-hotend_rounded_corner_radius)*left, hotend_diam/2-filament_pos_x-filament_diam]) {
+            translate([x,y,block_height/2]) {
+              hole(hotend_rounded_corner_radius*2,block_height,resolution);
+            }
+          }
+        }      
+      }
+    }
+    if(foot_enable == 0){
+      hull() {
+        for(y=[motor_side/2-hotend_rounded_corner_radius,hotend_rounded_corner_pos_y]) {
+          for (x=[(motor_side/2-hotend_rounded_corner_radius)*left,hotend_rounded_corner_pos_x]) {
+            translate([x,y,block_height/2]) {
+              hole(hotend_rounded_corner_radius*2,block_height,resolution);
+            }
           }
         }
       }
@@ -99,6 +138,18 @@ module direct_drive() {
         }
       }
     }
+    
+    //foot
+    if(foot_enable == 1) {
+      hull(){
+        for (side=[left,right]) {
+          translate([side * foot_length/2 + filament_pos_x, -motor_side/2,0])
+            cylinder(h=foot_height, r=foot_corner_radius);
+          translate([side * foot_length/2 + filament_pos_x, -motor_side/2 + foot_width,0])
+            cylinder(h=foot_height, r=foot_corner_radius);
+        }       
+      }
+    } 
   }
 
   module holes() {
@@ -150,6 +201,18 @@ module direct_drive() {
       translate([motor_shoulder_diam/2-mount_shoulder_width/2+1,0,0]) {
         cube([mount_shoulder_width,motor_shoulder_diam+1,motor_len],center=true);
       }
+    }
+    
+    //foot holes
+    if(foot_enable==1){
+        for(side=[left,right]){
+          translate([side*foot_hole_distance/2 + filament_pos_x, -motor_side/2 + foot_width +5 , filament_pos_z]){
+            rotate([90,0,0]){
+              cylinder(h=foot_width+10, d=foot_hole_diameter, $fn=32);
+              //cylinder(h=200, d=20, $fs=16);
+            }
+          }
+        }
     }
 
     // idler arm motor shoulder clearance
@@ -329,3 +392,4 @@ module direct_drive() {
 
 direct_drive();
 //assembly();
+
